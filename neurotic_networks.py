@@ -10,8 +10,24 @@ def debugPrintArray(ar, name):
 
 def generateData(N, D):
 
-    X = 1 - 2 * np.random.rand(N, D)
-    y = np.random.randint(0, 2, N)
+    #X = 1 - 2 * np.random.rand(N, D)
+    #y = np.random.randint(0, 2, N)
+
+    shifts = 1 - 2 * np.random.rand(1, D)
+    shifts = np.append(shifts, -shifts, 0)
+
+    size = 0.5
+
+    X = size * np.add(np.random.rand(N / 2, D), shifts[0, :])
+    X = np.append(X, size * np.add(np.random.rand(N / 2, D), shifts[1, :]), 0)
+
+    stretch = np.random.rand(1, D)
+    stretch = stretch / np.linalg.norm(stretch)
+    X = np.multiply(X, stretch)
+
+    y = np.ones(N / 2)
+    y = np.append(y, np.zeros(N / 2))
+
 
     return (X, y)
 
@@ -48,22 +64,16 @@ def initializeVisualization(X, y, cmap):
 
     plt.figure(figsize=(15,8))
 
-    axScatter = plt.subplot(121, autoscale_on=False, aspect='equal', adjustable='box-forced')
-    axClass = plt.subplot(122, autoscale_on=False, aspect='equal', adjustable='box-forced', sharex=axScatter, sharey=axScatter)
-
-    axScatter.title.set_text('Ground truth')
-
-    axScatter.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap, linewidths=0)
+    axClass = plt.subplot(111, autoscale_on=False, aspect='equal', adjustable='box-forced')
 
     #viewport
     v = 1.5
-    axScatter.axis([-v, v, -v, v])
     axClass.axis([-v, v, -v, v])
 
     plt.draw()
     plt.show(block=False)
 
-    return (axScatter, axClass)
+    return axClass
 
 
 def visualize(X, y, w_t, c, E, axClass, cmap, k):
@@ -125,6 +135,8 @@ def learnFromSample(x_s, y_s, w_t, a):
 
     if c != y_s:
 
+        print c
+
         delta_w = np.multiply(a * (y_s - c), x_s_t)
 
         w_t = w_t + delta_w
@@ -173,13 +185,13 @@ def runEpoch(X, y, w_t, a, E, d, axClass, cmap):
 
 def main():
 
-    N = 5 # sample count
+    N = 64 # sample count
     D = 2 # feature dimension count
 
     E = 50 # epoch count
-    a = 0.5 # step size
+    a = 0.25 # step size
     e = 0.95 # epoch learn factor
-    d = 1 / 100 # delay in seconds
+    d = 1/1000 # delay in seconds
 
     cmap = LinearSegmentedColormap.from_list('mycmap', [(0, 'red'), 
                                                         (1, 'blue')]
@@ -187,7 +199,7 @@ def main():
 
     ###
     X, y = generateData(N, D)
-    axScatter, axClass = initializeVisualization(X, y, cmap)
+    axClass = initializeVisualization(X, y, cmap)
 
     w_t = initializeWeights(D)
 
