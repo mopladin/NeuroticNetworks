@@ -43,25 +43,49 @@ def classify(X, w_t):
 #####
 def learnFromSample(x_s, y_s, w_t, a):
 
-    h, final_in = evaluate(w_t, x_s)
+    #h, final_in = evaluate(w_t, x_s)
 
-    x_s_t = np.append(x_s, -1)
-    error = y_s - h
-    delta_w = np.multiply(a * error, final_in)
+    #x_s_t = np.append(x_s, -1)
+    #error = y_s - h
+    #delta_w = np.multiply(a * error, final_in)
 
-    #w_t = w_t + delta_w
+    # Update final layer
+    #w_t[-1, :] = w_t[-1, :] + delta_w
 
-    #print "#####"
-    #print "w_t: %s" % np.array_str(w_t[-1, :])
-    #print "x_s_t: %s" % np.array_str(x_s_t)
-    #print "y_s: %i" % y_s
-    #print "h: %f" % h
-    #print "error: %f" % error
-    #print "delta_w: %s" % np.array_str(delta_w)
+    ###########
+    ###
+    x_t = np.append(x_s, -1)
 
-    # Test: Only update final layer
-    w_t[-1, :] = w_t[-1, :] + delta_w
+    hidden_weights = w_t[0:2, :]
 
+    hidden_out = np.dot(hidden_weights, x_t)
+    hidden_out = 1 / (1 + np.exp(-hidden_out))
+
+    ###
+    final_in = np.append(hidden_out, -1)
+    final_weights = w_t[-1, :]
+
+    proj = np.dot(final_weights, final_in)
+
+    final_out = 1 / (1 + np.exp(-proj))
+
+    error = y_s - final_out
+    delta_w_final = np.multiply(a * error, final_in)
+
+    ### 
+    w_t[-1, :] = w_t[-1, :] + delta_w_final
+
+    ### Update hidden layer
+    grads = np.multiply(hidden_out, (np.ones(np.shape(hidden_out)) - hidden_out))
+    #grads = np.ones(np.shape(hidden_out))
+
+    delta_w0 = np.multiply(a * error, np.multiply(grads[0], x_t))
+    delta_w1 = np.multiply(a * error, np.multiply(grads[1], x_t))
+
+    w_t[0, :] = w_t[0, :] + delta_w0
+    w_t[1, :] = w_t[1, :] + delta_w1
+
+    ##########
 
     return w_t
 
@@ -93,7 +117,7 @@ def visualize(X, y, w_t, axClass, cmap, i):
     axClass.autoscale(False)
 
     # Plot activation
-    res = 100.0
+    res = 8.0
     h = np.zeros((res, res))
 
     for j in range(int(res)):
@@ -169,6 +193,7 @@ def initializeVisualization(X, y, cmap):
 
     return axClass, axLoss
 
+#####
 def generateData(N, D):
 
     #X = 1 - 2 * np.random.rand(N, D)
@@ -202,7 +227,7 @@ def main():
 
     N = 10
     D = 2
-    E = 100 # epoch count
+    E = 500 # epoch count
     a = 2.5 # step size
     d = 1/1000 # delay in seconds
 
@@ -217,7 +242,11 @@ def main():
 
     axClass, axLoss = initializeVisualization(X, y, cmap)
 
-    w_t = np.array([[-2.0, 2.0, 2.0], [2.0, -2.0, 2.0], [1.0, 0.0, 0.0]])
+    #w_t = np.array([[-2.0, 2.0, 2.0], [2.0, -2.0, 2.0], [1.0, 0.0, 0.0]])
+    w_t = 1 - 2*np.random.rand(3, D)
+    w_t = np.append(w_t, np.zeros((3, 1)), 1)
+
+    #print w_t
 
     Likelihoods = []
 
@@ -231,8 +260,6 @@ def main():
 
         if e > 0:
             axLoss.plot([e, e + 1], [Likelihoods[e - 1], Likelihoods[e]], color='b')
-
-
 
     plt.show(block=True)
 
